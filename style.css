@@ -1,0 +1,23 @@
+body{
+margin:0;
+background:#f5f5dc;
+font-family:Arial,sans-serif;
+}
+
+header{
+background:#8B0000;
+color:white;
+text-align:center;
+padding:20px;
+font-size:32px;
+font-weight:bold;
+}
+
+.box{
+width:90%;
+max-width:800px;
+margin:20px auto;
+background:white;
+padding:20px;
+border-radius:12px;
+}
