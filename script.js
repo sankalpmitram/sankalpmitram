@@ -122,7 +122,7 @@ async function loadPanchang() {
 
     try {
 
-        const response = await fetch("http://localhost:3000/today");
+        const response = await fetch("https://sankalpmitram.onrender.com/today");
 
         const result = await response.json();
 
