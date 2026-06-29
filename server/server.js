@@ -1,12 +1,23 @@
+const db = require("./database");
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
+const path = require("path");
 require("dotenv").config();
 
 const app = express();
+app.use(express.json());
 
 // CORS Enable
 app.use(cors());
+// =======================
+// Admin Panel
+// =======================
+
+app.use(
+  "/admin",
+  express.static(path.join(__dirname, "admin"))
+);
 
 // ----------------------
 // Token Route
@@ -191,111 +202,135 @@ app.get("/planet", async (req, res) => {
 });
 
 // ----------------------
-// Today Route
+// Today Route (SQLite)
 // ----------------------
-app.get("/today", async (req, res) => {
+app.get("/today", (req, res) => {
 
-  try {
+    db.get(
+        "SELECT * FROM panchang WHERE id = 1",
+        [],
+        (err, row) => {
 
-    // Token
-    const tokenResponse = await axios.post(
-      "https://api.prokerala.com/token",
-      new URLSearchParams({
-        grant_type: "client_credentials",
-        client_id: process.env.CLIENT_ID,
-        client_secret: process.env.CLIENT_SECRET,
-      }),
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      }
+            if (err) {
+                return res.status(500).json({
+                    success: false,
+                    error: err.message
+                });
+            }
+
+            if (!row) {
+                return res.status(404).json({
+                    success: false,
+                    message: "No Panchang data found"
+                });
+            }
+
+            res.json(row);
+
+        }
     );
-
-    const token = tokenResponse.data.access_token;
-
-    // Common Params
-    const params = {
-      ayanamsa: 1,
-      coordinates: "26.2389,73.0243",
-      datetime: new Date().toISOString(),
-      la: "hi"
-    };
-
-    // तीनों API एक साथ
-    const [panchang, ritu, planet] = await Promise.all([
-
-      axios.get(
-        "https://api.prokerala.com/v2/astrology/panchang",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params
-        }
-      ),
-
-      axios.get(
-        "https://api.prokerala.com/v2/astrology/ritu",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params
-        }
-      ),
-
-      axios.get(
-        "https://api.prokerala.com/v2/astrology/planet-position",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: {
-            ...params,
-            planets: "0,1,5"
-          }
-        }
-      )
-
-    ]);
-const ayana =
-["मकर","कुम्भ","मीन","मेष","वृषभ","मिथुन"].includes(
-planet.data.data.planet_position[0].rasi.name
-)
-? "उत्तरायने"
-: "दक्षिणायने";
-
-    res.json({
-
-  status: "ok",
-
-  weekday: panchang.data.data.vaara,
-
-  paksha: panchang.data.data.tithi[0].paksha,
-
-  tithi: panchang.data.data.tithi[0].name,
-
-  nakshatra: panchang.data.data.nakshatra[0].name,
-
-  yoga: panchang.data.data.yoga[0].name,
-
-  karana: panchang.data.data.karana[0].name,
-
-  ritu: ritu.data.data.vedic_ritu.name,
-
-  sunSign: planet.data.data.planet_position[0].rasi.name,
-
-  moonSign: planet.data.data.planet_position[1].rasi.name,
-
-  jupiterSign: planet.data.data.planet_position[2].rasi.name,
-  ayana: ayana,
-
 
 });
-  } catch (error) {
+// =======================
+// Admin Login
+// =======================
 
-    console.log(error.response?.data || error.message);
+app.post("/login", (req, res) => {
 
-    res.status(500).json(
-      error.response?.data || { error: error.message }
+    const { username, password } = req.body;
+
+    if (
+        username === process.env.ADMIN_USERNAME &&
+        password === process.env.ADMIN_PASSWORD
+    ) {
+
+        res.json({
+            success: true
+        });
+
+    } else {
+
+        res.status(401).json({
+            success: false,
+            message: "Invalid Username or Password"
+        });
+
+    }
+
+});
+// =======================
+// Save Panchang
+// =======================
+
+app.post("/save", (req, res) => {
+
+    const {
+        weekday,
+        paksha,
+        tithi,
+        nakshatra,
+        yoga,
+        karana,
+        ritu,
+        ayana,
+        sunSign,
+        moonSign,
+        jupiterSign
+    } = req.body;
+
+    db.run("DELETE FROM panchang");
+
+    db.run(
+
+        `INSERT INTO panchang
+        (
+            id,
+            weekday,
+            paksha,
+            tithi,
+            nakshatra,
+            yoga,
+            karana,
+            ritu,
+            ayana,
+            sunSign,
+            moonSign,
+            jupiterSign
+        )
+        VALUES (1,?,?,?,?,?,?,?,?,?,?,?)`,
+
+        [
+            weekday,
+            paksha,
+            tithi,
+            nakshatra,
+            yoga,
+            karana,
+            ritu,
+            ayana,
+            sunSign,
+            moonSign,
+            jupiterSign
+        ],
+
+        function(err){
+
+            if(err){
+
+                return res.status(500).json({
+                    success:false,
+                    error:err.message
+                });
+
+            }
+
+            res.json({
+                success:true
+            });
+
+        }
+
     );
-
-  }
 
 });
 

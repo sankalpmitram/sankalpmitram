@@ -97,7 +97,11 @@ async function loadPanchang() {
 
         const response = await fetch("https://sankalpmitram.onrender.com/today");
 
-        const result = await response.json();
+const result = await response.json();
+
+if (!response.ok) {
+    throw new Error(result.message || "Panchang Load Failed");
+}
 
         // वार
         document.getElementById("todayDay").innerHTML =
