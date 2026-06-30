@@ -1,8 +1,9 @@
-const db = require("./database");
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
+const fs = require("fs");
 const path = require("path");
+const DATA_FILE = path.join(__dirname, "data", "panchang.json");
 require("dotenv").config();
 
 const app = express();
@@ -206,29 +207,18 @@ app.get("/planet", async (req, res) => {
 // ----------------------
 app.get("/today", (req, res) => {
 
-    db.get(
-        "SELECT * FROM panchang WHERE id = 1",
-        [],
-        (err, row) => {
+    fs.readFile(DATA_FILE, "utf8", (err, data) => {
 
-            if (err) {
-                return res.status(500).json({
-                    success: false,
-                    error: err.message
-                });
-            }
-
-            if (!row) {
-                return res.status(404).json({
-                    success: false,
-                    message: "No Panchang data found"
-                });
-            }
-
-            res.json(row);
-
+        if (err) {
+            return res.status(500).json({
+                success: false,
+                error: err.message
+            });
         }
-    );
+
+        res.json(JSON.parse(data));
+
+    });
 
 });
 // =======================
@@ -264,68 +254,25 @@ app.post("/login", (req, res) => {
 
 app.post("/save", (req, res) => {
 
-    const {
-        weekday,
-        paksha,
-        tithi,
-        nakshatra,
-        yoga,
-        karana,
-        ritu,
-        ayana,
-        sunSign,
-        moonSign,
-        jupiterSign
-    } = req.body;
+    fs.writeFile(
 
-    db.run("DELETE FROM panchang");
+        DATA_FILE,
 
-    db.run(
+        JSON.stringify(req.body, null, 2),
 
-        `INSERT INTO panchang
-        (
-            id,
-            weekday,
-            paksha,
-            tithi,
-            nakshatra,
-            yoga,
-            karana,
-            ritu,
-            ayana,
-            sunSign,
-            moonSign,
-            jupiterSign
-        )
-        VALUES (1,?,?,?,?,?,?,?,?,?,?,?)`,
+        (err) => {
 
-        [
-            weekday,
-            paksha,
-            tithi,
-            nakshatra,
-            yoga,
-            karana,
-            ritu,
-            ayana,
-            sunSign,
-            moonSign,
-            jupiterSign
-        ],
-
-        function(err){
-
-            if(err){
+            if (err) {
 
                 return res.status(500).json({
-                    success:false,
-                    error:err.message
+                    success: false,
+                    error: err.message
                 });
 
             }
 
             res.json({
-                success:true
+                success: true
             });
 
         }
