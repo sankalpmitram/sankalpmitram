@@ -7,14 +7,18 @@ const DATA_FILE = path.join(__dirname, "data", "panchang.json");
 require("dotenv").config();
 
 const app = express();
+
 app.use(express.json());
 
-// CORS Enable
+// CORS
 app.use(cors());
+
+// ✅ Main Website
+app.use(express.static(path.join(__dirname, "..")));
+
 // =======================
 // Admin Panel
 // =======================
-
 app.use(
   "/admin",
   express.static(path.join(__dirname, "admin"))
