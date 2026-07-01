@@ -12,7 +12,7 @@ document.getElementById("todayDate").innerHTML =
 // =========================
 
 const MANUAL_VIKRAM = "2083";
-const MANUAL_MONTH = "ज्येष्ठ";
+const MANUAL_MONTH = "आषाढ़";
 
 // =========================
 // Sankalp Template
